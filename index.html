@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Media Annotator</title>
+        <!-- 1. Bulma CSS -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css" />
+        <!-- 2. Font Awesome -->
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+            integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"
+        />
+        <link rel="stylesheet" href="style.css" />
+        <!-- 3. Konva.js -->
+        <script src="https://unpkg.com/konva@^9/konva.min.js"></script>
+        <script src="script.js" defer></script>
+    </head>
+
+    <body>
+        <!-- Main Layout Columns -->
+        <div class="main-layout">
+            <!-- Left Sidebar -->
+            <aside class="left-sidebar">
+                <div class="menu">
+                    <p class="menu-label">File</p>
+                    <ul class="menu-list">
+                        <li>
+                            <label for="annotator-file" class="load-media-label mb-2">
+                                <span class="icon is-small"><i class="fas fa-file-import"></i></span>
+                                <span>Load Media</span>
+                            </label>
+                            <input type="file" id="annotator-file" accept="video/*,image/*" class="is-hidden" />
+                        </li>
+                    </ul>
+
+                    <p class="menu-label">Tools</p>
+                    <ul class="menu-list">
+                        <li>
+                            <a id="tool-select" data-tool="select" title="Select/Move Annotation (Esc to deselect)">
+                                <span class="icon"><i class="fas fa-hand-pointer fa-fw"></i></span> Select
+                            </a>
+                        </li>
+                        <li>
+                            <a id="tool-arrow" data-tool="arrow" title="Arrow Tool">
+                                <span class="icon"><i class="fas fa-arrow-up-long fa-fw"></i></span> Arrow
+                            </a>
+                        </li>
+                        <li>
+                            <a id="tool-draw" data-tool="draw" title="Freehand Draw Tool">
+                                <span class="icon"><i class="fas fa-pencil-alt fa-fw"></i></span> Draw
+                            </a>
+                        </li>
+                        <li>
+                            <a id="tool-text" data-tool="text" title="Text Tool">
+                                <span class="icon"><i class="fas fa-font fa-fw"></i></span> Text
+                            </a>
+                        </li>
+                        <li>
+                            <a id="tool-rect-border" data-tool="rect-border" title="Bordered Box Tool">
+                                <span class="icon"><i class="far fa-square fa-fw"></i></span> Box (Border)
+                            </a>
+                        </li>
+                        <li>
+                            <a id="tool-rect-fill" data-tool="rect-fill" title="Filled Box Tool">
+                                <span class="icon"><i class="fas fa-square fa-fw"></i></span> Box (Fill)
+                            </a>
+                        </li>
+                    </ul>
+
+                    <div class="sidebar-controls">
+                        <p class="menu-label">Style</p>
+                        <div class="field mb-3">
+                            <label for="annotator-color" class="label is-small">Color</label>
+                            <div class="control">
+                                <input type="color" id="annotator-color" title="Annotation Color" value="#FF0000" />
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label for="annotator-width" class="label is-small">Width / Size</label>
+                            <div class="control is-flex is-align-items-center">
+                                <input type="range" id="annotator-width" min="1" max="30" value="4" title="Line/Border Width" />
+                                <span id="annotator-width-display">4</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p class="help is-size-7 mt-4">Select shape + <kbd>Del</kbd> to remove</p>
+            </aside>
+
+            <!-- Central Content Area -->
+            <div class="central-content-area">
+                <!-- Top Bar -->
+                <nav class="top-bar" role="navigation">
+                    <div class="action-buttons buttons are-small mb-0">
+                        <button id="btn-preview" class="button is-link" title="Preview Media with Annotations" disabled>
+                            <span class="icon"><i class="fas fa-play-circle"></i></span>
+                            <span>Preview</span>
+                        </button>
+                        <button id="btn-save-snapshot" class="button" title="Save Video Snapshot (PNG)" disabled>
+                            <span class="icon"><i class="fas fa-camera"></i></span>
+                            <span>Save Frame</span>
+                        </button>
+                        <button id="btn-save-image" class="button is-hidden" title="Save Annotated Image (PNG)" disabled>
+                            <span class="icon"><i class="fas fa-save"></i></span>
+                            <span>Save Image</span>
+                        </button>
+                        <button id="btn-export-json" class="button" title="Export Annotations (JSON)">
+                            <span class="icon"><i class="fas fa-file-export"></i></span>
+                            <span>Export</span>
+                        </button>
+                        <button id="btn-load-json" class="button" title="Load Annotations (JSON)">
+                            <span class="icon"><i class="fas fa-file-upload"></i></span>
+                            <span>Load</span>
+                        </button>
+                        <button id="btn-clear-all" class="button is-danger" title="Clear All Annotations">
+                            <span class="icon"><i class="fas fa-trash"></i></span>
+                            <span>Clear All</span>
+                        </button>
+                    </div>
+                    <div class="title is-6 has-text-right">Media Annotator Pro</div>
+                </nav>
+
+                <!-- Media Container -->
+                <div class="media-container">
+                    <div id="media-wrapper">
+                        <video id="annotator-video" playsinline crossorigin="anonymous"></video>
+                        <img id="annotator-image" alt="Annotatable Image" crossorigin="anonymous" />
+                        <div id="konva-container"></div>
+                        <!-- Loading Overlay -->
+                        <div id="loading-overlay" class="is-hidden">
+                            <div class="spinner"></div>
+                            <span id="loading-message">Processing...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Controls Bar -->
+                <div class="controls-bar">
+                    <button id="play-pause-btn" title="Play/Pause" class="button is-small" disabled>
+                        <span class="icon is-small"><i class="fas fa-play"></i></span>
+                    </button>
+                    <input type="range" id="progress-bar" min="0" value="0" step="0.01" class="playbar" disabled />
+                    <div id="time-display">0:00 / 0:00</div>
+                </div>
+            </div>
+
+            <!-- Right Sidebar -->
+            <aside id="right-sidebar" class="right-sidebar">
+                <div id="json-viewer" class="json-viewer">
+                    <div id="json-viewer-header" class="json-viewer-header">
+                        <h3>Annotations</h3>
+                        <span class="icon">
+                            <i id="json-toggle-icon" class="fas fa-chevron-down"></i>
+                        </span>
+                    </div>
+                    <div class="json-viewer-content">
+                        <textarea id="json-output" readonly class="textarea is-small" placeholder="Annotation data (JSON) will appear here..."></textarea>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <!-- Preview Modal -->
+        <div id="preview-modal" class="modal">
+            <div class="modal-background"></div>
+            <div class="modal-card">
+                <header class="modal-card-head">
+                    <p class="modal-card-title">Annotation Preview</p>
+                    <button class="delete" aria-label="close" id="preview-modal-close"></button>
+                </header>
+                <section class="modal-card-body">
+                    <div id="preview-media-wrapper">
+                        <video id="preview-video" playsinline controls style="max-height: 75vh;"></video>
+                        <div id="preview-konva-container"></div>
+                    </div>
+                </section>
+                <footer class="modal-card-foot is-justify-content-flex-end">
+                    <button class="button" id="preview-modal-close-btn">Close</button>
+                </footer>
+            </div>
+        </div>
+    </body>
+</html>
