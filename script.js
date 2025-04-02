@@ -50,6 +50,7 @@ class MediaAnnotator {
         this.previewMediaWrapper = document.getElementById("preview-media-wrapper");
 
         // States
+        this.fileName = null;
         this.stage = null;
         this.layer = null;
         this.transformer = null;
@@ -246,6 +247,7 @@ class MediaAnnotator {
         const isVideo = element.tagName === "VIDEO";
         this.videoEl.style.display = isVideo ? "block" : "none";
         this.imageEl.style.display = isVideo ? "none" : "block";
+        this.fileName = source.name ? source.name.split(".")[0] : "";
         if (isVideo) element.load();
     }
     _onMediaMetadataLoaded(element) {
@@ -328,6 +330,7 @@ class MediaAnnotator {
     }
     _resetToDefaultState() {
         console.log("Resetting state.");
+        this.fileName = null;
         this.mediaLoaded = false;
         this.mediaType = null;
         this.naturalWidth = 0;
@@ -672,7 +675,16 @@ class MediaAnnotator {
         input.click();
     }
     _handleExportClick() {
-        this.exportAnnotationData();
+        let jsonData = this.exportAnnotationData();
+        
+        console.log(jsonData);
+        // download json
+        const blob = new Blob([jsonData], { type: "application/json" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = this.fileName + "_annotations.json";
+        link.click();
+
         this.rightSidebar.classList.add("is-active"); /* Show panel on export */
     }
 
@@ -1023,14 +1035,12 @@ class MediaAnnotator {
             this._closePreviewModal();
         };
         this.previewVideoEl.load();
-        console.log("PREVIEW VIDEO ELEMENT: ", this.previewVideoEl);
     }
     _closePreviewModal() {
         if (this.previewRafId) {
             cancelAnimationFrame(this.previewRafId);
             this.previewRafId = null;
         }
-        console.log("PREVIEW VIDEO ELEMENT:_closePreviewModal ", this.previewVideoEl);
         this.previewVideoEl.pause();
         this.previewVideoEl.removeAttribute("src");
         this.previewVideoEl.load();
@@ -1062,7 +1072,7 @@ class MediaAnnotator {
             alert("Pause video first.");
             return;
         }
-        const filename = `annotated_snapshot_${this.videoEl.currentTime.toFixed(1)}s.png`;
+        const filename = `annotated_snapshot_${this.fileName}-${this.videoEl.currentTime.toFixed(1)}s.png`;
         this._saveMediaWithAnnotations(this.videoEl, filename);
     }
     saveImage() {
@@ -1070,7 +1080,7 @@ class MediaAnnotator {
             alert("Image not loaded.");
             return;
         }
-        const filename = `annotated_image.png`;
+        const filename = `${this.fileName}-annotated_image.png`;
         this._saveMediaWithAnnotations(this.imageEl, filename);
     }
     _saveMediaWithAnnotations(mediaElement, downloadFilename) {
