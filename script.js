@@ -33,7 +33,7 @@ class MediaAnnotator {
             "rect-border": document.getElementById("tool-rect-border"),
             "rect-fill": document.getElementById("tool-rect-fill"),
         };
-        this.btnPreview = document.getElementById("btn-preview");
+        // this.btnPreview = document.getElementById("btn-preview");
         this.btnSaveSnapshot = document.getElementById("btn-save-snapshot");
         this.btnSaveImage = document.getElementById("btn-save-image");
         this.btnExportJson = document.getElementById("btn-export-json");
@@ -112,7 +112,7 @@ class MediaAnnotator {
         });
         this.colorPicker.addEventListener("input", this._updateColor.bind(this));
         this.lineWidthSlider.addEventListener("input", this._updateLineWidth.bind(this));
-        this.btnPreview.addEventListener("click", this.preview.bind(this));
+        // this.btnPreview.addEventListener("click", this.preview.bind(this));
         this.btnSaveSnapshot.addEventListener("click", this.saveSnapshot.bind(this));
         this.btnSaveImage.addEventListener("click", this.saveImage.bind(this));
         this.btnExportJson.addEventListener("click", this._handleExportClick.bind(this));
@@ -380,7 +380,7 @@ class MediaAnnotator {
             this.progressBar.style.setProperty("--progress", "0%");
             this._updatePlayButtonIcon(true);
         }
-        this.btnPreview.disabled = !mediaReady || !isVideo;
+        // this.btnPreview.disabled = !mediaReady || !isVideo;
         this.btnSaveSnapshot.disabled = !mediaReady || !isVideo;
         this.btnSaveImage.disabled = !mediaReady || !isImage;
         this.btnSaveImage.classList.toggle("is-hidden", !isImage);
